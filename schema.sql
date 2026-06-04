@@ -1,0 +1,39 @@
+CREATE TABLE IF NOT EXISTS users(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(500) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    dob TIMESTAMP NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    gender ENUM('m', 'f', 'o') NOT NULL,
+    role ENUM('super_admin', 'artist_manager', 'artist') NOT NULL DEFAULT 'artist',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS artists(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    dob TIMESTAMP NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    gender ENUM('m', 'f', 'o') NOT NULL,
+    first_release_year YEAR,
+    no_of_album_released INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS musics(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    artist_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    album_name VARCHAR(255) NOT NULL,
+    genre ENUM('rnb', 'country', 'clasic', 'rock', 'jazz'),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
