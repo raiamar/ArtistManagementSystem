@@ -21,12 +21,24 @@ class Database
         return self::$instance;
     }
 
-    public static function test(string $sql)
+    public static function query(string $sql, array $params = []) : PDOStatement
     {
         $stm = self::getInstance()->prepare($sql);
-        $stm->execute();
-        return $stm->fetchAll();
+        $stm->execute($params);
+        return $stm;
     }
 
+    public static function fetchOne(string $sql, array $params = []): ?array
+    {
+        $result = self::query($sql, $params)->fetch();
+        return $result ?: null;
+    }
+
+
+    public static function insert(string $sql, array $params = []): int
+    {
+        self::query($sql, $params);
+        return (int) self::getInstance()->lastInsertId();
+    }
     
 }

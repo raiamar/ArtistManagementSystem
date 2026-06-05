@@ -1,14 +1,35 @@
 <?php
 
-require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../src/models/auth.php';
 
 $pageTitle = 'Login -' . APP_NAME;
+$successMessage = $_SESSION['register_success_message'] ?? null;
+if ($successMessage)
+    unset($_SESSION['register_success_message']);
+
 require_once __DIR__ . '/../layout/header.php'
 ?>
 
-
 <div class="min-h-screen flex items-center justify-center">
     <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-8">
+        <?php if ($successMessage): ?>
+            <div id="alert-3" class="flex sm:items-center p-4 mb-4 text-sm text-fg-success-strong rounded-base bg-green-200" role="alert">
+                <svg class="w-4 h-4 shrink-0 mt-0.5 md:mt-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 11h2v5m-2 0h4m-2.592-8.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                <span class="sr-only">Info</span>
+                <div class="ms-2 text-sm ">
+                    <?= htmlspecialchars($successMessage) ?>
+                </div>
+                <button type="button" onclick="document.getElementById('alert-3').remove();" class="ml-auto -mx-1.5 -my-1.5 p-1.5 rounded-lg hover:bg-green-200 focus:ring-2 focus:ring-green-300 inline-flex h-8 w-8" aria-label="Close">
+                    <span class="sr-only">Close</span>
+                    <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                    </svg>
+                </button>
+            </div>
+        <?php endif; ?>
+
         <h4 class="text-xl font-bold text-center text-gray-800 mb-8"><?= APP_NAME ?></h4>
         <form class="max-w-sm mx-auto">
             <div class="mb-5">
