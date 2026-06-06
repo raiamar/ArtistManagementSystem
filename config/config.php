@@ -6,7 +6,8 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 
+
 define('APP_NAME', 'Artist Management System');
-define('APP_URL', 'http://localhost/RecordManager/');
+define('APP_URL', 'http://localhost/record-manager/public/');
 
 session_start();

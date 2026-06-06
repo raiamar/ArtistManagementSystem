@@ -1,9 +1,15 @@
 <?php
+
+if(!isLoggedIn())
+    redirect(APP_URL.'login.php');
+
 $pageTitle = 'Dashboard -' . APP_NAME;
 
 $successMessage = $_SESSION['login_success_message'] ?? null;
 if ($successMessage)
     unset($_SESSION['login_success_message']);
+
+$user = currenctUser();
 ?>
 
 <header class="border-b border-solid border-gray-300 bg-white">
@@ -17,7 +23,7 @@ if ($successMessage)
                 </svg>
                 <span class="sr-only">Info</span>
                 <div class="ms-2 text-sm ">
-                    <?= htmlspecialchars($successMessage) ?>
+                    <?= htmlspecialchars($successMessage . $user['name']) ?>
                 </div>
                 <button type="button" onclick="document.getElementById('alert-3').remove();" class="ml-auto -mx-1.5 -my-1.5 p-1.5 rounded-lg hover:bg-green-200 focus:ring-2 focus:ring-green-300 inline-flex h-8 w-8" aria-label="Close">
                     <span class="sr-only">Close</span>

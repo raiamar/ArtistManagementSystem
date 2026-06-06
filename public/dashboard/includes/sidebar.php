@@ -23,7 +23,7 @@
                 </div>
 
                 <a
-                    href="#"
+                    href="/../record-manager/public/logout.php"
                     class="inline-flex items-center px-4 py-2 text-sm font-medium bg-white text-black border rounded hover:bg-gray-100">
                     <span class="mr-2">Logout</span>
                     <i class="fa-solid fa-right-to-bracket"></i>

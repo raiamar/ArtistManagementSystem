@@ -92,11 +92,15 @@ class Auth{
         return ['success' => false, 'errors'=>['email'=>'Invalid email or password.']];
 
     $_SESSION['user_id'] = (int) $user['id'];
-    $_SESSION['user_name'] = $user['name'];
+    $_SESSION['user_name'] = $user['first_name'].' '. $user['last_name'];
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['user_role'] = $user['role'];
 
     return ['success' => true];
+ }
+
+ public static function logout(): void{
+    session_destroy();
  }
 
 }
