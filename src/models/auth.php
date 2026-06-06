@@ -21,7 +21,7 @@ class Auth{
     if(!validateEmail($email))
         $errors['email'] = 'Invalid email format';
 
-    $isEmailTaken = Database::fetchOne("SELECT id FROM users WHERE email = ?", [$email]);
+    $isEmailTaken = Database::fetchOne("SELECT id FROM users WHERE email = ? AND isActive = TRUE", [$email]);
     if($isEmailTaken)
         $errors['email'] = 'Email already taken.';
 
@@ -66,11 +66,11 @@ class Auth{
 
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
     
-    $adminUser = Database::fetchOne("SELECT COUNT(*) as count FROM users WHERE role = 'super_admin'");
-    $isFirstAdmin = $adminUser && (int)$adminUser['count'] === 0;
+    // $adminUser = Database::fetchOne("SELECT COUNT(*) as count FROM users WHERE role = 'super_admin'");
+    // $isFirstAdmin = $adminUser && (int)$adminUser['count'] === 0;
 
-    $allowedRoles = $isFirstAdmin ? ['super_admin', 'artist_manager', 'artist'] : ['artist_manager', 'artist'];
-    $role = in_array($role, $allowedRoles) ? $role : 'artist';
+    // $allowedRoles = $isFirstAdmin ? ['super_admin', 'artist_manager', 'artist'] : ['artist_manager', 'artist'];
+    // $role = in_array($role, $allowedRoles) ? $role : 'artist';
 
     Database::insert(
         "INSERT INTO users(first_name, last_name, email, password, phone, dob, address, gender, role) VALUES(?,?,?,?,?,?,?,?,?)",

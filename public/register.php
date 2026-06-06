@@ -129,11 +129,13 @@ require_once __DIR__ . '/../layout/header.php';
                     <select id="role" name="role" required
                         class="bg-neutral-secondary-medium border border-default-medium px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600">
                         <?php $selectedRole = $old['role'] ?? 'artist'; ?>
+                         <option value="super_admin" <?= $selectedRole === 'super_admin' ? 'selected' : ''  ?>>Admin</option>
+                        <!-- 
                         <?php if ($isFirstAdmin): ?>
                             <option value="super_admin" <?= $selectedRole === 'super_admin' ? 'selected' : ''  ?>>Admin</option>
                         <?php endif; ?>
                         <option value="artist_manager" <?= $selectedRole === 'artist_manager' ? 'selected' : ''  ?>>Manager</option>
-                        <option value="artist" <?= $selectedRole === 'artist' ? 'selected' : ''  ?>>Artist</option>
+                        <option value="artist" <?= $selectedRole === 'artist' ? 'selected' : ''  ?>>Artist</option> -->
                     </select>
                 </div>
 
@@ -155,7 +157,7 @@ require_once __DIR__ . '/../layout/header.php';
                     <label for="cpassword"
                         class="mb-2 text-slate-900 font-medium text-sm inline-block">Confirm
                         Password</label>
-                    <input type="password" id="cpassword" name="cpassword" placeholder="••••••••" required
+                    <input type="password" id="cpassword" name="cpassword" value="<?= h($old['cpassword'] ?? '') ?>" placeholder="••••••••" required
                         class="bg-neutral-secondary-medium border border-default-medium px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600" />
                         <button type="button" data-target="cpassword" class="password-toggle absolute inset-y-0 right-0 flex items-center px-3 mt-7">
                             <i class="fa-solid fa-eye"></i>
