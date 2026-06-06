@@ -80,4 +80,23 @@ class Auth{
     return ['success' => true];
  }
 
+
+ public static function login(string $email, string $password) : array
+ {
+     $user = Database::fetchOne(
+        "SELECT * FROM users WHERE email = ? AND isActive = TRUE",
+        [$email]
+    );
+
+    if(!$user || !password_verify($password, $user['password']))
+        return ['success' => false, 'errors'=>['email'=>'Invalid email or password.']];
+
+    $_SESSION['user_id'] = (int) $user['id'];
+    $_SESSION['user_name'] = $user['name'];
+    $_SESSION['user_email'] = $user['email'];
+    $_SESSION['user_role'] = $user['role'];
+
+    return ['success' => true];
+ }
+
 }

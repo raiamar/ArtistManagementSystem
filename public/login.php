@@ -2,10 +2,34 @@
 
 require_once __DIR__ . '/../src/models/auth.php';
 
+if(isLoggedIn())
+    redirect('dashboard/index.php');
+
 $pageTitle = 'Login -' . APP_NAME;
 $successMessage = $_SESSION['register_success_message'] ?? null;
 if ($successMessage)
     unset($_SESSION['register_success_message']);
+
+
+$errors = [];
+$old = $_POST;
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (!validateCsrf($_POST['csrf_token'] ?? '')) {
+        $errors['csrf'] = 'Token is invalid.';
+    } else {
+        $result = Auth::login(
+            $_POST['email'] ?? '',
+            $_POST['password'] ?? '',
+        );
+
+        if ($result['success']) {
+            $_SESSION['login_success_message'] = "Welcome {$old['fname']} {$old['lname']}";
+            redirect('dashboard/index.php');
+        } else {
+            $errors = $result['errors'];
+        }
+    }
+}
 
 require_once __DIR__ . '/../layout/header.php'
 ?>
@@ -30,16 +54,30 @@ require_once __DIR__ . '/../layout/header.php'
             </div>
         <?php endif; ?>
 
+        <?php if (!empty($errors['csrf'])): ?>
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <?= h($errors['csrf']) ?>
+            </div>
+        <?php endif; ?>
+
         <h4 class="text-xl font-bold text-center text-gray-800 mb-8"><?= APP_NAME ?></h4>
-        <form class="max-w-sm mx-auto">
+        <form class="max-w-sm mx-auto" method="POST">
+            <?= csrfField() ?>
             <div class="mb-5">
                 <label for="email" class="block mb-2.5 text-sm font-medium text-heading">Email</label>
-                <input type="email" id="email" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="name@flowbite.com" required />
+                <input type="email" name="email" value="<?= h($old['email'] ?? '') ?>" id="email" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="amar@gmail.com" required />
             </div>
-            <div class="mb-5">
+            <div class="mb-5 relative">
                 <label for="password" class="block mb-2.5 text-sm font-medium text-heading">Password</label>
-                <input type="password" id="password" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="••••••••" required />
+                <input type="password" id="password" name="password" value="<?= h($old['password'] ?? '') ?>" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="••••••••" required />
+                <button type="button" data-target="password" class="password-toggle absolute inset-y-0 right-0 flex items-center px-3 mt-7">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
             </div>
+
+            <?php if (!empty($errors['email'])): ?>
+                <p class="text-red-600 text-sm mt-1"><?= h($errors['email']) ?></p>
+            <?php endif;  ?>
 
             <div class="flex items-center justify-between mt-4">
                 <button type="submit" class="text-white bg-blue-600 box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">

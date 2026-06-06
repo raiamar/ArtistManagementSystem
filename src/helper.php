@@ -13,7 +13,6 @@ function csrfToken(): string
     return $_SESSION['csrf_token'];
 }
 
-
 function validateCsrf(string $token) : bool
 {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
@@ -22,6 +21,29 @@ function validateCsrf(string $token) : bool
 function h(?string $value): string
 {
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
+}
+
+function isLoggedIn(): bool
+{
+    return isset($_SESSION['user_id']);
+}
+
+function currenctUser(): ?array{
+    if(!isLoggedIn())
+        return null;
+
+    return[
+        'id'=>$_SESSION['user_id'],
+        'name'=>$_SESSION['user_name'],
+        'email'=>$_SESSION['user_email'],
+        'role'=>$_SESSION['user_role'],
+    ];
+}
+
+function redirect(string $url): void
+{
+    header('Location: ' . $url);
+    exit;
 }
 
 function validateEmail(string $email): bool

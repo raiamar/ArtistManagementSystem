@@ -1,4 +1,7 @@
- 
+ <?php 
+    require_once __DIR__.'/../../../src/models/auth.php';
+    $user = currenctUser();
+ ?>
         <aside class="w-full md:h-screen md:w-64 bg-gray-900 md:flex md:flex-col">
             <header class="border-b border-solid border-gray-800 flex-grow">
                 <h1 class="py-6 px-4 text-gray-100 text-base font-medium">Artist Management System</h1>
@@ -15,8 +18,8 @@
 
             <footer class="p-4 border-t border-gray-800">
                 <div class="flex flex-col mb-3">
-                    <span class="text-white">User Name</span>
-                    <span class="text-xs text-gray-500">Role</span>
+                    <span class="text-white"><?= $user['name'] ?></span>
+                    <span class="text-xs text-gray-500"><?= $user['role'] ?></span>
                 </div>
 
                 <a

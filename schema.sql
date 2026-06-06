@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users(
     address VARCHAR(255) NOT NULL,
     gender ENUM('m', 'f', 'o') NOT NULL,
     role ENUM('super_admin', 'artist_manager', 'artist') NOT NULL DEFAULT 'artist',
+    isActive BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
