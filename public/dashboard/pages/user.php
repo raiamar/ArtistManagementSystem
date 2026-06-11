@@ -268,7 +268,7 @@ $hasErrors = !empty($errors);
                                         <?php $selectedRole = $old['role'] ?? 'artist'; ?>
                                         <option value="super_admin" <?= $selectedRole === 'super_admin' ? 'selected' : ''  ?>>Admin</option>
                                         <option value="artist_manager" <?= $selectedRole === 'artist_manager' ? 'selected' : ''  ?>>Manager</option>
-                                        <option value="artist" <?= $selectedRole === 'artist' ? 'selected' : ''  ?>>Artist</option>
+                                        <!-- <option value="artist" <?= $selectedRole === 'artist' ? 'selected' : ''  ?>>Artist</option> -->
                                     </select>
                                 </div>
 

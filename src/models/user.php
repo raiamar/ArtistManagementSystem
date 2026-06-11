@@ -52,19 +52,35 @@ class UserHandler
 
     public static function delete(int $id): array
     {
-        // TODO: llok for its depencies and proceed accordingly
-        // $dependencies = [];
-        // $user = Database::fetchOne("SELECT * FROM users WHERE id = ? AND isActive = TRUE", [$id]);
-
-        if ($id === $_SESSION['user_id']) {
+         if ($id === $_SESSION['user_id']) {
             $_SESSION['user_delete_error'] = 'User is currently acctive.';
             return [
                 'success' => false,
                 'message' => 'Cannot delete the currently logged-in user.'
             ];
         }
-        // only soft delete 
+
+        $user = Database::fetchOne("SELECT * FROM users WHERE id = ? AND isActive = TRUE", [$id]);
+
+        if ($user && $user['role'] === 'artist') {
+            $artist = Database::fetchOne("SELECT a.id FROM artists a WHERE user_id = ?", [$id]);
+
+            if ($artist) {
+                $musicCount = Database::fetchOne("SELECT COUNT(*) as count FROM musics WHERE artist_id = ?",  [$artist['id']]);
+                if ((int)$musicCount['count'] > 0) {
+                    return [
+                        'success' => false,
+                        'message' => 'music(s) under their artist profile.'
+                    ];
+                }
+            }
+
+            Database::query("DELETE FROM artists WHERE id = ?", [$artist['id']]);
+        }
+
+        // soft delete
         Database::query("UPDATE users SET isActive = FALSE WHERE id = ?", [$id]);
+
         return [
             'success' => true,
             'message' => 'User deleted successfully.'
