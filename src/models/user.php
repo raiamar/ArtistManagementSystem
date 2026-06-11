@@ -1,11 +1,12 @@
 <?php
-require_once __DIR__.'/../../config/db.php';
-require_once __DIR__.'/../helper.php';
+require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../helper.php';
 
 class UserHandler
 {
-    public static function list(int $page, int $perPage = 10): array{
-         return paginate('users','isActive = TRUE',[],$perPage,$page);
+    public static function list(int $page, int $perPage = 10): array
+    {
+        return paginate('users', 'isActive = TRUE', [], $perPage, $page);
     }
 
     public static function create(array $data): array
@@ -46,6 +47,28 @@ class UserHandler
         }
 
         return ['success' => true];
+    }
+
+
+    public static function delete(int $id): array
+    {
+        // TODO: llok for its depencies and proceed accordingly
+        // $dependencies = [];
+        // $user = Database::fetchOne("SELECT * FROM users WHERE id = ? AND isActive = TRUE", [$id]);
+
+        if ($id === $_SESSION['user_id']) {
+            $_SESSION['user_delete_error'] = 'User is currently acctive.';
+            return [
+                'success' => false,
+                'message' => 'Cannot delete the currently logged-in user.'
+            ];
+        }
+        // only soft delete 
+        Database::query("UPDATE users SET isActive = FALSE WHERE id = ?", [$id]);
+        return [
+            'success' => true,
+            'message' => 'User deleted successfully.'
+        ];
     }
 
     private static function validate(array $data, ?int $excludeId = null, bool $requirePassword = false): array
