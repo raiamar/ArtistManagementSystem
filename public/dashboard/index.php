@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__.'/../../src/models/auth.php';
 $page = $_GET['page'] ?? 'dashboard';
 
 $content = __DIR__ . "/pages/{$page}.php";
@@ -11,3 +12,5 @@ if(!file_exists($content))
 }
 
 require_once __DIR__.'/includes/layout.php';
+
+requireAuth();

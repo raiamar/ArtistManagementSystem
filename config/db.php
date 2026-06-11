@@ -34,6 +34,11 @@ class Database
         return $result ?: null;
     }
 
+    public static function fetchAll(string $sql, array $params = []) : array 
+    {
+        return self::query($sql, $params)->fetchAll();
+    }
+
 
     public static function insert(string $sql, array $params = []): int
     {

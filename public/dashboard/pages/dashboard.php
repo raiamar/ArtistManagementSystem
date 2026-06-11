@@ -1,7 +1,7 @@
 <?php
 
-if(!isLoggedIn())
-    redirect(APP_URL.'login.php');
+if (!isLoggedIn())
+    redirect(APP_URL . 'login.php');
 
 $pageTitle = 'Dashboard -' . APP_NAME;
 
@@ -63,3 +63,4 @@ $user = currenctUser();
     <section id="chart" class="p-4">
         <canvas id="myChart" width="200" height="200"></canvas>
     </section>
+    

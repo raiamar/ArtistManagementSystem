@@ -28,6 +28,19 @@ function isLoggedIn(): bool
     return isset($_SESSION['user_id']);
 }
 
+function requireAuth() : void{
+    if(!isLoggedIn())
+    {
+        header('Location: ' . APP_URL . 'login.php');
+        exit;
+    }
+}
+
+function hasRole(string ...$roles) : bool{
+    $user = currenctUser();
+    return $user !== null && in_array($user['role'], $roles, true);
+}
+
 function currenctUser(): ?array{
     if(!isLoggedIn())
         return null;
@@ -49,4 +62,70 @@ function redirect(string $url): void
 function validateEmail(string $email): bool
 {
     return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+}
+
+function paginate(string $table, string $where = '', array $params = [], int $perPage = 10, ?int $page = null) : array
+{
+    $page = $page ?? max(1, (int)($_GET['p'] ?? 1));
+    $offset = ($page - 1) * $perPage;
+
+    $countSql = "SELECT COUNT(*) as total FROM $table";
+
+    if($where)
+        $countSql .= " WHERE $where";
+
+    $total = (int) Database::fetchOne($countSql, $params)['total'];
+    $lastPage = max(1, (int) ceil($total / $perPage));
+
+    $dataSql = "SELECT * FROM $table";
+    if($where)
+        $dataSql .= " WHERE $where";
+
+    $dataSql .= " ORDER BY created_at DESC LIMIT $perPage OFFSET $offset";
+    $data = Database::fetchAll($dataSql, $params);
+
+    return[
+        'data' => $data,
+        'current_page' => $page,
+        'per_page' => $perPage,
+        'last_page' => $lastPage,
+        'total' => $total,
+        'has_prev' => $page > 1,
+        'has_next' => $page < $lastPage,
+        'prev_page' => $page - 1,
+        'next_page' => $page + 1,
+    ];
+}
+
+function paginationLinks(array $paginator, string $baseUrl = '?') : string
+{
+    if($paginator['last_page'] <= 1)
+        return '';
+    $html = '<div class="flex justify-center mt-4"><nav class="flex items-center gap-1">';
+
+    if($paginator['has_prev'])
+    {
+        $html .= '<a href="' . $baseUrl . '&p=' . $paginator['prev_page'] . '" class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-100 transition">&laquo; Previous</a>';
+    }else{
+        $html .= '<span class="px-3 py-1 border border-gray-200 rounded text-sm text-gray-400">&laquo; Previous</span>';
+    }
+
+    for($i = 1; $i <= $paginator['last_page']; $i++)
+    {
+        if ($i === $paginator['current_page']) {
+            $html .= '<span class="px-3 py-1 border border-blue-500 rounded text-sm bg-blue-500 text-white">' . $i . '</span>';
+        } else {
+            $html .= '<a href="' . $baseUrl . '&p=' . $i . '" class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-100 transition">' . $i . '</a>';
+        }
+    }
+
+    if ($paginator['has_next']) {
+        $html .= '<a href="' . $baseUrl . '&p=' . $paginator['next_page'] . '" class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-100 transition">Next &raquo;</a>';
+    } else {
+        $html .= '<span class="px-3 py-1 border border-gray-200 rounded text-sm text-gray-400">Next &raquo;</span>';
+    }
+
+    $html .= '</nav></div>';
+
+    return $html;
 }
