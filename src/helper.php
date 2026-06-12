@@ -129,3 +129,19 @@ function paginationLinks(array $paginator, string $baseUrl = '?') : string
 
     return $html;
 }
+
+function csvExport(array $data, string $filename): void{
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    $output = fopen('php://output', 'w');
+    fwrite($output, "\xEF\xBB\xBF");
+    if(!empty($data)){
+        fputcsv($output, array_keys($data[0]));
+        foreach($data as $row)
+        {
+            fputcsv($output, $row);
+        }
+    }
+    fclose($output);
+    exit;
+}

@@ -70,7 +70,12 @@ $hasErrors = !empty($errors);
     <div class="flex justify-between items-center mb-4">
         <h2 class="p-6">Artist Management</h2>
 
-        <button command="show-modal" commandfor="createArtistModel" onclick="openCreateModal()" class="bg-blue-600 text-white px-4 py-2 mr-4 rounded-md hover:bg-blue-700 transition text-sm font-medium">+ New User</button>
+        <div class="flex gap-2">
+
+        <button command="show-modal" commandfor="createArtistModel" onclick="openCreateModal()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition text-sm font-medium">+ New Artist</button>
+        <a href="?page=artist&export=csv" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition text-sm font-medium">Export CSV</a>
+        <button command="show-modal" commandfor="createArtistModel" onclick="openCreateModal()" class="bg-cyan-500 text-white px-4 py-2 rounded-md hover:bg-cyan-600 transition text-sm font-medium mr-4">Import CSV</button>
+        </div>
     </div>
 </header>
 

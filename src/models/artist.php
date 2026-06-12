@@ -165,4 +165,22 @@ class ArtistHandler
 
         return $errors;
     }
+
+    public static function exportCsv(): void
+    {
+        $artists = Database::fetchAll(
+            "SELECT u.first_name AS 'first name', u.last_name AS 'last name', u.email, u.address, u.phone, 
+            DATE_FORMAT(u.dob, '%Y-%m-%d') AS dob, 
+            CASE u.gender
+                WHEN 'm' THEN 'Male'
+                WHEN 'f' THEN 'Female'
+                WHEN 'o' THEN 'Other'
+                ELSE 'N/A'
+            END AS gender,
+            CASE WHEN a.first_release_year IS NOT NULL THEN a.first_release_year ELSE 'N/A' END AS 'first release',
+            COALESCE(a.no_of_album_released,0) AS 'total album released'
+            FROM artists a JOIN users u ON a.user_id = u.id ORDER BY u.first_name ASC"
+        );
+        csvExport($artists, 'artists_export_' . date('Y-m-d_H-i-s') . '.csv');
+    }
 }
