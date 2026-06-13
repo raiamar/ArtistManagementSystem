@@ -63,84 +63,30 @@ class SongHandler
 
     public static function create(array $data): array
     {
-        $errors = self::validate($data, null, true);
+        $errors = self::validate($data);
 
         if (!empty($errors))
             return ['success' => false, 'errors' => $errors];
 
-        $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
-
-        $pdo = Database::getInstance();
-
-        try {
-
-            $pdo->beginTransaction();
-
-            $role = 'artist';
-            $userId = Database::insert(
-                "INSERT INTO users(first_name, last_name, email, password, phone, dob, address, gender, role) VALUES(?,?,?,?,?,?,?,?,?)",
-                [$data['fname'], $data['lname'], $data['email'], $hashedPassword, $data['mobile'], $data['dob'], $data['address'], $data['gender'], $role]
-            );
-
-            Database::insert(
-                "INSERT INTO artists(user_id, first_release_year, no_of_album_released) VALUES(?,?,?)",
-                [$userId, $data['first_release_year'] ?? null, $data['no_of_album_released'] ?? null]
-            );
-
-            $pdo->commit();
-        } catch (Exception $e) {
-            error_log(
-                $e->__toString(),
-                3,
-                LOG_FILE
-            );
-            $pdo->rollBack();
-            return ['success' => false, 'errors' => ['general' => 'Failed to create artist.']];
-        }
+        Database::insert(
+            "INSERT INTO musics (artist_id, title, album_name, genre) VALUES (?, ?, ?, ?)",
+            [$data['artist_id'], $data['title'], $data['album_name'], $data['genre']]
+        );
 
         return ['success' => true];
     }
 
     public static function update(int $id, array $data): array
     {
-        $errors = self::validate($data, (int)($data['user_id'] ?? 0) ?: null, false);
+        $errors = self::validate($data);
 
         if (!empty($errors))
             return ['success' => false, 'errors' => $errors];
 
-        $pdo = Database::getInstance();
-
-        try {
-            $pdo->beginTransaction();
-            $userId = $data['user_id'];
-            if (!empty($data['password'])) {
-                $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
-                Database::query(
-                    "UPDATE users SET first_name=?, last_name=?, email=?, password=?, phone=?, dob=?, address=?, gender=? WHERE id=?",
-                    [$data['fname'], $data['lname'], $data['email'], $hashedPassword, $data['mobile'], $data['dob'], $data['address'], $data['gender'], $userId]
-                );
-            } else {
-                Database::query(
-                    "UPDATE users SET first_name=?, last_name=?, email=?, phone=?, dob=?, address=?, gender=? WHERE id=?",
-                    [$data['fname'], $data['lname'], $data['email'], $data['mobile'], $data['dob'], $data['address'], $data['gender'], $userId]
-                );
-            }
-
-            Database::query(
-                "UPDATE artists SET first_release_year=?, no_of_album_released=? WHERE id=?",
-                [$data['first_release_year'] ?? null, $data['no_of_album_released'] ?? null, $id]
-            );
-
-            $pdo->commit();
-        } catch (Exception $e) {
-            error_log(
-                $e->__toString(),
-                3,
-                LOG_FILE
-            );
-            $pdo->rollBack();
-            return ['success' => false, 'errors' => ['general' => 'Failed to update artist.']];
-        }
+        Database::query(
+            "UPDATE musics SET title = ?, album_name = ?, genre = ? WHERE id = ?",
+            [$data['title'], $data['album_name'], $data['genre'], $id]
+        );
 
         return ['success' => true];
     }
@@ -148,36 +94,14 @@ class SongHandler
 
     public static function delete(int $id): array
     {
-        $artist = Database::fetchOne("SELECT a.id, a.user_id FROM artists a WHERE id = ?", [$id]);
+        $song = Database::fetchOne("SELECT id FROM musics WHERE id = ?", [$id]);
 
-        if (!$artist)
-            return ['success' => false, 'message' => 'Artist not found.'];
+        if (!$song)
+            return ['success' => false, 'message' => 'Song not found.'];
 
-        $musicCount = Database::fetchOne("SELECT COUNT(*) as count FROM musics WHERE artist_id = ?", [$id]);
-        if ((int)$musicCount['count'] > 0) {
-            return [
-                'success' => false,
-                'message' => 'Cannot delete artist with music(s) under their profile.'
-            ];
-        }
+        Database::query("DELETE FROM musics WHERE id = ?", [$id]);
 
-        $pdo = Database::getInstance();
-
-        try {
-            $pdo->beginTransaction();
-            Database::query("DELETE FROM artists WHERE id = ?", [$id]);
-            Database::query("UPDATE users SET isActive = FALSE WHERE id = ?", [$artist['user_id']]);
-            $pdo->commit();
-        } catch (Exception $e) {
-            error_log($e->__toString(), 3, LOG_FILE);
-            $pdo->rollBack();
-            return ['success' => false, 'message' => 'Failed to delete artist.'];
-        }
-
-        return [
-            'success' => true,
-            'message' => 'User deleted successfully.'
-        ];
+        return ['success' => true, 'message' => 'Song deleted successfully.'];
     }
 
     public static function getArtistIdForUser(int $userId): ?int
@@ -186,81 +110,22 @@ class SongHandler
         return $artist ? (int) $artist['id'] : null;
     }
 
-    private static function validate(array $data, ?int $excludeId = null, bool $requirePassword = false): array
+    private static function validate(array $data): array
     {
         $errors = [];
 
-        if (empty($data['fname']) || !preg_match("/^[a-zA-Z\s]+$/", $data['fname']))
-            $errors['fname'] = 'Invalid first name.';
+        if (empty($data['title']))
+            $errors['title'] = 'Title is required.';
 
-        if (empty($data['lname']) || !preg_match("/^[a-zA-Z\s]+$/", $data['lname']))
-            $errors['lname'] = 'Invalid last name.';
+        if (empty($data['album_name']))
+            $errors['album_name'] = 'Album name is required.';
 
-        if (empty($data['address']))
-            $errors['address'] = 'Address is required.';
+        if (empty($data['genre']))
+            $errors['genre'] = 'Genre is required.';
 
-        if (!validateEmail($data['email']))
-            $errors['email'] = 'Invalid email format';
-
-        $emailCheckSql = "SELECT id FROM users WHERE email = ? AND isActive = TRUE";
-        $emailCheckParams = [$data['email']];
-        if ($excludeId !== null) {
-            $emailCheckSql .= " AND id != ?";
-            $emailCheckParams[] = $excludeId;
-        }
-        $isEmailTaken = Database::fetchOne($emailCheckSql, $emailCheckParams);
-        if ($isEmailTaken)
-            $errors['email'] = 'Email already taken.';
-
-        if (empty($data['mobile']) || !preg_match("/^(97|98)\d{8}$/", $data['mobile']))
-            $errors['mobile'] = "Invalid phone format";
-
-        if (empty($data['gender']))
-            $errors['gender'] = "Gender is required";
-
-        if (!empty($data['dob'])) {
-            $dobDate = new DateTime($data['dob']);
-            $today = new DateTime();
-
-            if ($dobDate > $today)
-                $errors['dob'] = 'DOB cannot be future date.';
-            else {
-                $age = $today->diff($dobDate)->y;
-                if ($age < 16)
-                    $errors['dob'] = 'You must be at least 16 years to register';
-            }
-        } else {
-            $errors['dob'] = 'DOB is required';
-        }
-
-        if (!empty($data['first_release_year'])) {
-            $year = (int)$data['first_release_year'];
-            $currentYear = (int)date('Y');
-            if ($year < 1900 || $year > $currentYear)
-                $errors['first_release_year'] = "Year must be between 1900 and $currentYear.";
-        }
-
-        if (isset($data['no_of_album_released']) && $data['no_of_album_released'] !== '' && $data['no_of_album_released'] !== null) {
-            if (!is_numeric($data['no_of_album_released']) || (int)$data['no_of_album_released'] < 0)
-                $errors['no_of_album_released'] = 'Number of albums must be a non-negative number.';
-        }
-
-        if (!empty($data['password'])) {
-            if (($data['password'] ?? '') !== ($data['cpassword'] ?? ''))
-                $errors['cpassword'] = "Passwords do not match.";
-
-            if (
-                strlen($data['password']) < 8 ||
-                !preg_match('/[A-Z]/', $data['password']) ||
-                !preg_match('/[a-z]/', $data['password']) ||
-                !preg_match('/[0-9]/', $data['password']) ||
-                !preg_match('/[^A-Za-z0-9]/', $data['password'])
-            ) {
-                $errors['password'] = 'Password must be at least 8 char with uppercase, lowercase, number & special character.';
-            }
-        } elseif ($requirePassword) {
-            $errors['password'] = 'Password is required.';
-        }
+        $allowedGenres = ['rnb', 'country', 'clasic', 'rock', 'jazz'];
+        if (!empty($data['genre']) && !in_array($data['genre'], $allowedGenres))
+            $errors['genre'] = 'Invalid genre selected.';
 
         return $errors;
     }
