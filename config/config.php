@@ -9,5 +9,9 @@ define('DB_CHARSET', 'utf8mb4');
 
 define('APP_NAME', 'Artist Management System');
 define('APP_URL', 'http://localhost/record-manager/public/');
+define('LOG_FILE', __DIR__ . '/logs/error.log');
+
+if (!is_dir(dirname(LOG_FILE)))
+    mkdir(dirname(LOG_FILE), 0775, true);
 
 session_start();

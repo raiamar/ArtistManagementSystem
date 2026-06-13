@@ -1,0 +1,9 @@
+PDOException: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'role' cannot be null in D:\Software\xampp\htdocs\record-manager\config\db.php:27
+Stack trace:
+#0 D:\Software\xampp\htdocs\record-manager\config\db.php(27): PDOStatement->execute(Array)
+#1 D:\Software\xampp\htdocs\record-manager\config\db.php(45): Database::query('INSERT INTO use...', Array)
+#2 D:\Software\xampp\htdocs\record-manager\src\models\artist.php(50): Database::insert('INSERT INTO use...', Array)
+#3 D:\Software\xampp\htdocs\record-manager\public\dashboard\pages\artist.php(17): ArtistHandler::create(Array)
+#4 D:\Software\xampp\htdocs\record-manager\public\dashboard\includes\layout.php(23): require('D:\\Software\\xam...')
+#5 D:\Software\xampp\htdocs\record-manager\public\dashboard\index.php(20): require_once('D:\\Software\\xam...')
+#6 {main}

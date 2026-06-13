@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../../src/models/artist.php';
 
 $page = max(1, (int)($_GET['p']  ?? 1));
-$artists = hasRole('super_admin','artist_manager') ? ArtistHandler::list($page) : null;
+$artists = hasRole('super_admin', 'artist_manager') ? ArtistHandler::list($page) : null;
 $sn = ($artists['current_page'] - 1) * $artists['per_page'];
 
 $errors = [];
@@ -17,20 +17,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $result = ArtistHandler::create($_POST);
         if ($result['success']) {
             $_SESSION['user_created_message'] = "{$_POST['fname']} {$_POST['lname']}, account created successfully.";
-            header('Location: ?page=user');
+            header('Location: ?page=artist');
             exit;
         }
         $errors = $result['errors'];
     } elseif ($action === 'update') {
-        $artistId = (int)($_POST['artist_id'] ?? 0);
+        // echo"<pre>";
+        // print_r($_POST);
 
-        if ($artistId <= 0) {
+        // die;
+        $artistId = (int)($_POST['artist_id'] ?? 0);
+        $userId = (int)($_POST['user_id'] ?? 0);
+
+        if ($artistId <= 0 || $userId <= 0) {
             $errors['general'] = 'Invalid user.';
         } else {
             $result = ArtistHandler::update($artistId, $_POST);
             if ($result['success']) {
                 $_SESSION['user_created_message'] = "{$_POST['fname']} {$_POST['lname']}, account updated successfully.";
-                header('Location: ?page=user');
+                header('Location: ?page=artist');
                 exit;
             }
             $errors = $result['errors'];
@@ -44,25 +49,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['user_created_message'] = 'User deleted successfully.';
             } else {
                 $_SESSION['user_delete_error'] = $result['message'];
+                if (!empty($result['errors'])) {
+                    $_SESSION['import_errors'] = $result['errors'];
+                }
             }
         }
-        header('Location: ?page=user');
+        header('Location: ?page=artist');
+        exit;
+    } elseif ($action === 'import_csv') {
+        $result = ArtistHandler::importCsv($_FILES['artist_csv_file'] ?? []);
+        if ($result['success']) {
+            $_SESSION['user_created_message'] = $result['message'];
+            if (!empty($result['errors'])) {
+                $_SESSION['import_errors'] = $result['errors'];
+            }
+        } else {
+            $_SESSION['user_delete_error'] = $result['message'];
+            if (!empty($result['errors'])) {
+                $_SESSION['import_errors'] = $result['errors'];
+            }
+        }
+        header('Location: ?page=artist');
         exit;
     }
 }
 
 $formMode = $isEdit ? 'update' : 'create';
 $formartistId = $isEdit ? (int)($_POST['artist_id'] ?? 0) : 0;
-
+$formUserId = $isEdit ? (int)($_POST['user_id'] ?? 0) : 0;
 ?>
 
 <?php
 $successMessage = $_SESSION['user_created_message'] ?? null;
 $deleteErrorMessage = $_SESSION['user_delete_error'] ?? null;
+$importErrors = $_SESSION['import_errors'] ?? null;
 if ($successMessage)
     unset($_SESSION['user_created_message']);
 if ($deleteErrorMessage)
     unset($_SESSION['user_delete_error']);
+if ($importErrors)
+    unset($_SESSION['import_errors']);
 $hasErrors = !empty($errors);
 ?>
 
@@ -72,9 +98,9 @@ $hasErrors = !empty($errors);
 
         <div class="flex gap-2">
 
-        <button command="show-modal" commandfor="createArtistModel" onclick="openCreateModal()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition text-sm font-medium">+ New Artist</button>
-        <a href="?page=artist&export=csv" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition text-sm font-medium">Export CSV</a>
-        <button command="show-modal" commandfor="createArtistModel" onclick="openCreateModal()" class="bg-cyan-500 text-white px-4 py-2 rounded-md hover:bg-cyan-600 transition text-sm font-medium mr-4">Import CSV</button>
+            <button onclick="openCreateModal()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition text-sm font-medium">+ New Artist</button>
+            <a href="?page=artist&export=csv" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition text-sm font-medium">Export CSV</a>
+            <button onclick="openImportModal()" class="bg-cyan-500 text-white px-4 py-2 rounded-md hover:bg-cyan-600 transition text-sm font-medium mr-4">Import CSV</button>
         </div>
     </div>
 </header>
@@ -110,6 +136,17 @@ $hasErrors = !empty($errors);
                 </svg>
             </button>
         </div>
+    </div>
+<?php endif; ?>
+
+<?php if ($importErrors): ?>
+    <div class="mx-3 mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm text-left">
+        <strong>Validation errors:</strong>
+        <ul class="list-disc pl-4 mt-1">
+            <?php foreach ($importErrors as $e): ?>
+                <li><?= h($e) ?></li>
+            <?php endforeach; ?>
+        </ul>
     </div>
 <?php endif; ?>
 
@@ -173,7 +210,7 @@ $hasErrors = !empty($errors);
             <div tabindex="0" class="flex min-h-full items-end justify-center p-4 text-center focus:outline-none sm:items-center sm:p-0">
                 <el-dialog-panel class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-4xl data-closed:sm:translate-y-0 data-closed:sm:scale-95">
 
-                    <h4 id="modal-title" class="text-xl font-bold text-center text-gray-800 mb-8">Create User</h4>
+                    <h4 id="modal-title" class="text-xl font-bold text-center text-gray-800 mb-8">Manage Artist</h4>
 
                     <?php if (!empty($errors['csrf'])): ?>
                         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -192,6 +229,7 @@ $hasErrors = !empty($errors);
                             <?= csrfField() ?>
                             <input type="hidden" name="action" id="action" value="<?= $formMode ?>">
                             <input type="hidden" name="artist_id" id="artist_id" value="<?= $formartistId ?>">
+                            <input type="hidden" name="user_id" id="user_id" value="<?= $formUserId ?>">
                             <div class="grid sm:grid-cols-2 gap-6">
                                 <div>
                                     <label for="fname" class="mb-2 text-slate-900 font-medium text-sm inline-block">First
@@ -265,14 +303,21 @@ $hasErrors = !empty($errors);
                                 </div>
 
                                 <div>
-                                    <label for="role" class="mb-2 text-slate-900 font-medium text-sm inline-block">Register As</label>
-                                    <select id="role" name="role" required
-                                        class="bg-neutral-secondary-medium border border-default-medium px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600">
-                                        <?php $selectedRole = $old['role'] ?? 'artist'; ?>
-                                        <option value="super_admin" <?= $selectedRole === 'super_admin' ? 'selected' : ''  ?>>Admin</option>
-                                        <option value="artist_manager" <?= $selectedRole === 'artist_manager' ? 'selected' : ''  ?>>Manager</option>
-                                        <!-- <option value="artist" <?= $selectedRole === 'artist' ? 'selected' : ''  ?>>Artist</option> -->
-                                    </select>
+                                    <label for="first_release_year" class="mb-2 text-slate-900 font-medium text-sm inline-block">First Release Year</label>
+                                    <input type="number" id="first_release_year" name="first_release_year" value="<?= h($old['first_release_year'] ?? '') ?>" placeholder="e.g. 2020" min="1900" max="<?= date('Y') ?>"
+                                        class="bg-neutral-secondary-medium border border-default-medium px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600" />
+                                    <?php if (!empty($errors['first_release_year'])): ?>
+                                        <p class="text-red-600 text-sm mt-1"><?= h($errors['first_release_year']) ?></p>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div>
+                                    <label for="no_of_album_released" class="mb-2 text-slate-900 font-medium text-sm inline-block">Albums Released</label>
+                                    <input type="number" id="no_of_album_released" name="no_of_album_released" value="<?= h($old['no_of_album_released'] ?? '') ?>" placeholder="0" min="0"
+                                        class="bg-neutral-secondary-medium border border-default-medium px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600" />
+                                    <?php if (!empty($errors['no_of_album_released'])): ?>
+                                        <p class="text-red-600 text-sm mt-1"><?= h($errors['no_of_album_released']) ?></p>
+                                    <?php endif; ?>
                                 </div>
 
                                 <div class="relative">
@@ -314,7 +359,7 @@ $hasErrors = !empty($errors);
 
                                 <button id="submit-btn" type="submit"
                                     class="py-2 px-3.5 text-sm rounded-md font-semibold cursor-pointer tracking-wide text-white border border-blue-600 bg-blue-600 hover:bg-blue-700 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
-                                    <?= $isEdit ? 'Update User' : 'Create an User' ?>
+                                    <?= $isEdit ? 'Update Artist' : 'Create Artist' ?>
                                 </button>
                             </div>
                         </form>
@@ -348,6 +393,36 @@ $hasErrors = !empty($errors);
             </div>
         </dialog>
     </el-dialog>
+
+    <!-- Import CSV Modal -->
+
+    <el-dialog>
+        <dialog id="importCsvModal" aria-labelledby="delete-dialog-title" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
+            <el-dialog-backdrop class="fixed inset-0 bg-gray-500/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"></el-dialog-backdrop>
+            <div tabindex="0" class="flex min-h-full items-end justify-center p-4 text-center focus:outline-none sm:items-center sm:p-0">
+                <el-dialog-panel class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-md data-closed:sm:translate-y-0 data-closed:sm:scale-95">
+                    <h4 class="text-xl font-bold text-center text-gray-800 mb-4">Import Artists from CSV</h4>
+                    <div class="p-3 text-center">
+                        <form method="POST" enctype="multipart/form-data">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action" value="import_csv">
+                            <div class="mb-4">
+                                <label for="artist_csv_file" class="block text-sm font-medium text-gray-700 mb-2">Choose CSV file</label>
+                                <input type="file" id="artist_csv_file" name="artist_csv_file" accept=".csv" required
+                                    class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" />
+                            </div>
+                            <p class="text-xs text-gray-500 mb-4">CSV must include columns: first name, last name, email, password, phone, dob, address, gender(m,f,o), first release year, total albums released</p>
+                            <p class="text-xs text-gray-500 mb-4"><a href="?page=artist&sample=artist-csv" class="text-blue-600 hover:underline">Download sample CSV</a></p>
+                            <div class="flex items-center justify-center gap-4">
+                                <button type="button" onclick="closeModal('importCsvModal')" class="rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">Cancel</button>
+                                <button type="submit" class="rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-700">Upload & Import</button>
+                            </div>
+                        </form>
+                    </div>
+                </el-dialog-panel>
+            </div>
+        </dialog>
+    </el-dialog>
 <?php endif; ?>
 
 <script>
@@ -366,6 +441,7 @@ $hasErrors = !empty($errors);
         document.getElementById('submit-btn').textContent = 'Create User';
         document.getElementById('action').value = 'create';
         document.getElementById('artist_id').value = '';
+        document.getElementById('user_id').value = '';
         document.getElementById('userForm').reset();
         document.getElementById('password').setAttribute('required', '');
         document.getElementById('cpassword').setAttribute('required', '');
@@ -380,10 +456,11 @@ $hasErrors = !empty($errors);
     function editUser(btn) {
         const user = getUserData(btn);
         const modal = document.getElementById('createArtistModel');
-        document.getElementById('modal-title').textContent = 'Update User';
-        document.getElementById('submit-btn').textContent = 'Update User';
+        document.getElementById('modal-title').textContent = 'Update Artist';
+        document.getElementById('submit-btn').textContent = 'Update Artist';
         document.getElementById('action').value = 'update';
-        document.getElementById('artist_id').value = user.id;
+        document.getElementById('artist_id').value = user.artist_id;
+        document.getElementById('user_id').value = user.user_id;
         document.getElementById('fname').value = user.first_name;
         document.getElementById('lname').value = user.last_name;
         document.getElementById('email').value = user.email;
@@ -391,7 +468,8 @@ $hasErrors = !empty($errors);
         document.getElementById('dob').value = user.dob_formatted;
         document.getElementById('gender').value = user.gender;
         document.getElementById('address').value = user.address;
-        document.getElementById('role').value = user.role;
+        document.getElementById('first_release_year').value = user.first_release_year || '';
+        document.getElementById('no_of_album_released').value = user.no_of_album_released || '';
         document.getElementById('password').value = '';
         document.getElementById('cpassword').value = '';
         document.getElementById('password').removeAttribute('required');
@@ -407,15 +485,19 @@ $hasErrors = !empty($errors);
     function confirmDelete(btn) {
         const user = getUserData(btn);
         document.getElementById('delete-user-name').textContent = user.first_name + ' ' + user.last_name;
-        document.getElementById('delete-artist_id').value = user.id;
+        document.getElementById('delete-artist_id').value = user.artist_id;
         document.getElementById('deleteArtistModal').showModal();
+    }
+
+    function openImportModal() {
+        document.getElementById('importCsvModal').showModal();
     }
 
     <?php if ($hasErrors): ?>
         document.addEventListener('DOMContentLoaded', function() {
             <?php if ($isEdit): ?>
-                document.getElementById('modal-title').textContent = 'Update User';
-                document.getElementById('submit-btn').textContent = 'Update User';
+                document.getElementById('modal-title').textContent = 'Update Artist';
+                document.getElementById('submit-btn').textContent = 'Update Artist';
                 document.getElementById('password').removeAttribute('required');
                 document.getElementById('cpassword').removeAttribute('required');
             <?php endif; ?>
