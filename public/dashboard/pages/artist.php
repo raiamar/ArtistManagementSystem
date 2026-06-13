@@ -22,10 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         $errors = $result['errors'];
     } elseif ($action === 'update') {
-        // echo"<pre>";
-        // print_r($_POST);
-
-        // die;
         $artistId = (int)($_POST['artist_id'] ?? 0);
         $userId = (int)($_POST['user_id'] ?? 0);
 
@@ -196,7 +192,7 @@ $hasErrors = !empty($errors);
     </div>
 
     <div class="p-4">
-        <?= paginationLinks($artists, '?page=user') ?>
+        <?= paginationLinks($artists, '?page=artist') ?>
     </div>
 </section>
 
