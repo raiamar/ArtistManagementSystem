@@ -23,7 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         );
 
         if ($result['success']) {
-            $_SESSION['login_success_message'] = "Welcome {$old['fname']} {$old['lname']}";
+             $_SESSION['login_success_message'] = "Welcome ";
+
             redirect('dashboard/index.php');
         } else {
             $errors = $result['errors'];

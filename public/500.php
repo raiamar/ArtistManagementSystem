@@ -1,6 +1,8 @@
 <div id="fof-main">
     <div class="fof text-center">
-        <h1>Error 404</h1>
+        <h1>Error 500</h1>
+        <p class="text-2xl font-semibold text-gray-700 mt-4">Internal Server Error</p>
+        <p class="text-gray-500 mt-2">Something went wrong. Please try again later.</p>
     </div>
 </div>
 
